@@ -1,4 +1,5 @@
 
+
 # ===== ОСНОВА =====
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
@@ -21,14 +22,10 @@ WORKDIR /app
 # Копируем приложение
 COPY --from=build /app/publish .
 
-# Создаём минимальные папки (чтобы не падало)
+# Создаём папки
 RUN mkdir -p wwwroot lpc
 
-# Копируем init.conf, если есть
-COPY ./init.conf ./init.conf || echo "init.conf not found"
-
 # Создаём заглушку index.html
-RUN echo '<h1>Lampac работает! Веб-интерфейс в разработке.</h1>' > wwwroot/index.html
+RUN echo '<h1>Lampac запущен! Веб-интерфейс в разработке.</h1><p>API работает: <a href="/api/online">/api/online</a></p>' > wwwroot/index.html
 
 ENTRYPOINT ["dotnet", "Lampac.dll"]
-
