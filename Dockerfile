@@ -1,14 +1,27 @@
 
 
-# Скачивание cloudflare.zip (без падения)
-RUN curl -fsSL https://lampac.sh/update/cloudflare.zip -o cloudflare.zip || \
-    (echo "cloudflare.zip not found, skipping" && touch cloudflare.zip)
+# ===== ОСНОВА =====
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+WORKDIR /app
+EXPOSE 8080
 
-# Распаковка (если файл есть)
-RUN unzip -q cloudflare.zip -d . 2>/dev/null || echo "No files to unzip"
+# ===== СБОРКА =====
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+COPY . .
 
-# Удаляем zip
-RUN rm -f cloudflare.zip
+RUN dotnet restore Lampac/Lampac.csproj
+RUN dotnet publish Lampac/Lampac.csproj -c Release -o /app/publish --no-restore
 
-# Заглушка index.html
+# ===== ФИНАЛ =====
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+
+# Создаём папки
+RUN mkdir -p wwwroot lpc
+
+# Заглушка (всё работает!)
 RUN echo '<h1>Lampac работает!</h1><p>API: <a href="/api/online">/api/online</a></p>' > wwwroot/index.html
+
+ENTRYPOINT ["dotnet", "Lampac.dll"]
