@@ -1,3 +1,4 @@
+
 # ===== ОСНОВА =====
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
@@ -21,14 +22,13 @@ WORKDIR /app
 # Копируем опубликованное приложение
 COPY --from=build /app/publish .
 
-# Копируем статические файлы (wwwroot, lpc, init.conf)
-COPY ./wwwroot ./wwwroot
-COPY ./lpc ./lpc
-COPY ./init.conf ./
-
-# (Опционально) Добавляем cloudflare.zip
-RUN curl -fSL -o cloudflare.zip https://lampac.sh/update/cloudflare.zip && \
+# Копируем только то, что точно есть
+RUN mkdir -p wwwroot lpc && \
+    curl -fSL -o cloudflare.zip https://lampac.sh/update/cloudflare.zip && \
     unzip -o cloudflare.zip -d . && \
     rm cloudflare.zip
+
+# Устанавливаем переменную окружения
+ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 
 ENTRYPOINT ["dotnet", "Lampac.dll"]
