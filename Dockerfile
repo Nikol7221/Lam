@@ -18,8 +18,18 @@ FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-RUN mkdir -p wwwroot lpc
-RUN echo '<h1>Lampac запущен! Веб-интерфейс в разработке.</h1><p>API работает: <a href="/api/online">/api/online</a></p>' > wwwroot/index.html
+# Установка curl и unzip
+RUN apt-get update && apt-get install -y curl unzip && rm -rf /var/lib/apt/lists/*
 
-# Динамический порт
+# Создание папок
+RUN mkdir -p wwwroot lpc
+
+# Скачивание и распаковка cloudflare.zip
+RUN curl -fSL -o cloudflare.zip https://lampac.sh/update/cloudflare.zip && \
+    unzip -q cloudflare.zip -d . && \
+    rm cloudflare.zip || echo "cloudflare.zip not available"
+
+# Заглушка index.html
+RUN echo '<h1>Lampac работает!</h1><p>API: <a href="/api/online">/api/online</a></p>' > wwwroot/index.html
+
 ENTRYPOINT ["dotnet", "Lampac.dll"]
