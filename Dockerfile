@@ -10,9 +10,6 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY . .
 
-# Установка unzip
-RUN apt-get update && apt-get install -y unzip curl && rm -rf /var/lib/apt/lists/*
-
 # Восстановление и публикация
 RUN dotnet restore Lampac/Lampac.csproj
 RUN dotnet publish Lampac/Lampac.csproj -c Release -o /app/publish --no-restore
@@ -24,13 +21,14 @@ WORKDIR /app
 # Копируем приложение
 COPY --from=build /app/publish .
 
-# Создаём папки
+# Создаём минимальные папки (чтобы не падало)
 RUN mkdir -p wwwroot lpc
 
-# Скачиваем и распаковываем cloudflare.zip
-RUN curl -fSL -o cloudflare.zip https://lampac.sh/update/cloudflare.zip && \
-    unzip -q cloudflare.zip -d . && \
-    rm cloudflare.zip || echo "Failed to download cloudflare.zip"
+# Копируем init.conf, если есть
+COPY ./init.conf ./init.conf || echo "init.conf not found"
+
+# Создаём заглушку index.html
+RUN echo '<h1>Lampac работает! Веб-интерфейс в разработке.</h1>' > wwwroot/index.html
 
 ENTRYPOINT ["dotnet", "Lampac.dll"]
 
